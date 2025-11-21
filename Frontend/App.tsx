@@ -8,6 +8,7 @@ import { Actions } from './pages/admin/Actions';
 import { StudentFunds } from './pages/admin/StudentFunds';
 import { ClassFunds } from './pages/admin/ClassFunds';
 import { Reports } from './pages/student/Reports';
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 // Route Guard Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
