@@ -1,12 +1,12 @@
 // backend/server.js
+require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const bodyParser = require('body-parser');
-require('dotenv').config();
 
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000; // 2. Change: Use env PORT if available (required for Render)
 
 // Middleware
 // Allow requests from your local frontend AND your future Vercel domain
@@ -21,11 +21,16 @@ app.use(bodyParser.json());
 
 // MongoDB Connection
 // REPLACE THIS STRING WITH YOUR MONGODB ATLAS CONNECTION STRING
-const MONGO_URI = "mongodb+srv://finance:finance@cluster0.w0v0u10.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.w0v0u10.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
+
+console.log("Connecting to MongoDB..."); // Optional: helpful for debugging
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.log(err));
+  .catch(err => {
+      console.error('MongoDB Connection Error:', err);
+      console.log('Current Connection String:', MONGO_URI); // Be careful logging this in production logs if it has real passwords
+  });
 
 // --- SCHEMAS ---
 
