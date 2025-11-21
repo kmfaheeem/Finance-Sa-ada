@@ -12,8 +12,8 @@ const PORT = process.env.PORT || 5000; // 2. Change: Use env PORT if available (
 // Allow requests from your local frontend AND your future Vercel domain
 app.use(cors({
   origin: [
-    "http://localhost:5173", 
-    "https://hikma-finance.vercel.app" // You will get this URL later from Vercel
+    "http://localhost:5173",
+    "https://hikma-finance.vercel.app" // Add your actual deployed frontend URL here
   ],
   credentials: true
 }));
