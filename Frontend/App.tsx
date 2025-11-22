@@ -11,7 +11,7 @@ import { ClassFunds } from './pages/admin/ClassFunds';
 import { SpecialFunds } from './pages/admin/SpecialFunds';
 import { Reports } from './pages/student/Reports';
 import { SpeedInsights } from "@vercel/speed-insights/react";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 // ... (Keep your ProtectedRoute component exactly as is) ...
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
@@ -54,8 +54,11 @@ const App: React.FC = () => {
       <ToastProvider> {/* <-- Wrap with ToastProvider inside FinanceProvider */}
         <HashRouter>
           <AppRoutes />
+
+          {/* Vercel Tools */}
           <SpeedInsights />
-          <Analytics />
+          <Analytics /> {/* Add this here */}
+
         </HashRouter>
       </ToastProvider>
     </FinanceProvider>
