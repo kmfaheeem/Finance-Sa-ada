@@ -87,6 +87,7 @@ const App: React.FC = () => {
     <FinanceProvider>
       <HashRouter>
         <AppRoutes />
+        <SpeedInsights />  {/* <--- INSERT THIS LINE HERE */}
       </HashRouter>
     </FinanceProvider>
   );
