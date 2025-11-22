@@ -6,30 +6,28 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 
 const app = express();
-const PORT = process.env.PORT || 5000; // 2. Change: Use env PORT if available (required for Render)
+const PORT = process.env.PORT || 5000;
 
 // Middleware
-// Allow requests from your local frontend AND your future Vercel domain
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://hikma-finance.vercel.app" // Add your actual deployed frontend URL here
+    "https://hikma-finance.vercel.app" 
   ],
   credentials: true
 }));
 app.use(bodyParser.json());
 
 // MongoDB Connection
-// REPLACE THIS STRING WITH YOUR MONGODB ATLAS CONNECTION STRING
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.w0v0u10.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
 
-console.log("Connecting to MongoDB..."); // Optional: helpful for debugging
+console.log("Connecting to MongoDB...");
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
   .catch(err => {
       console.error('MongoDB Connection Error:', err);
-      console.log('Current Connection String:', MONGO_URI); // Be careful logging this in production logs if it has real passwords
+      console.log('Current Connection String:', MONGO_URI);
   });
 
 // --- SCHEMAS ---
@@ -37,7 +35,7 @@ mongoose.connect(MONGO_URI)
 const AdminSchema = new mongoose.Schema({
   name: String,
   username: { type: String, unique: true },
-  password: String, // Note: In production, use bcrypt to hash passwords
+  password: String, 
   role: { type: String, default: 'admin' }
 });
 
@@ -56,10 +54,10 @@ const ClassSchema = new mongoose.Schema({
 });
 
 const TransactionSchema = new mongoose.Schema({
-  entityId: String, // Store MongoDB _id
-  entityType: String, // 'student' or 'class'
+  entityId: String, 
+  entityType: String, 
   amount: Number,
-  type: String, // 'deposit' or 'withdrawal'
+  type: String, 
   date: String,
   reason: String,
   createdAt: { type: Date, default: Date.now }
@@ -72,9 +70,8 @@ const Transaction = mongoose.model('Transaction', TransactionSchema);
 
 // --- ROUTES ---
 
-// 1. Initialization (Seed Data) - Run this once if DB is empty
+// 1. Initialization (Seed Data)
 app.post('/api/seed', async (req, res) => {
-  // Check if admins exist
   const adminCount = await Admin.countDocuments();
   if (adminCount === 0) {
     await Admin.create([
@@ -83,7 +80,6 @@ app.post('/api/seed', async (req, res) => {
     ]);
   }
   
-  // Check students
   const studentCount = await Student.countDocuments();
   if (studentCount === 0) {
     const students = Array.from({ length: 30 }).map((_, i) => ({
@@ -102,7 +98,6 @@ app.post('/api/seed', async (req, res) => {
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
 
-  // Check Admin
   const admin = await Admin.findOne({ username, password });
   if (admin) {
     return res.json({ 
@@ -111,7 +106,6 @@ app.post('/api/login', async (req, res) => {
     });
   }
 
-  // Check Student
   const student = await Student.findOne({ username, password });
   if (student) {
     return res.json({ 
@@ -123,7 +117,7 @@ app.post('/api/login', async (req, res) => {
   res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
 
-// 3. Fetch All Data (For Dashboard/Context)
+// 3. Fetch All Data
 app.get('/api/data', async (req, res) => {
   try {
     const admins = await Admin.find();
@@ -149,7 +143,7 @@ app.post('/api/students', async (req, res) => {
   }
 });
 
-// Update Student (Password/Username)
+// Update Student
 app.put('/api/students/:id', async (req, res) => {
   try {
     const updated = await Student.findByIdAndUpdate(req.params.id, req.body, { new: true });
@@ -191,18 +185,22 @@ app.put('/api/admins/:id', async (req, res) => {
   res.json(updated);
 });
 
+// Delete Admin (NEW)
+app.delete('/api/admins/:id', async (req, res) => {
+  await Admin.findByIdAndDelete(req.params.id);
+  res.json({ message: 'Deleted' });
+});
+
 // 5. Transactions
 app.post('/api/transactions', async (req, res) => {
   const { entityId, entityType, amount, type, date, reason } = req.body;
   const numAmount = Number(amount);
 
-  // Create Transaction Record
   const transaction = new Transaction({
     entityId, entityType, amount: numAmount, type, date, reason
   });
   await transaction.save();
 
-  // Update Account Balance
   if (entityType === 'student') {
     const student = await Student.findById(entityId);
     student.accountBalance = type === 'deposit' 
@@ -220,7 +218,6 @@ app.post('/api/transactions', async (req, res) => {
   res.json(transaction);
 });
 
-// Start Server
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });

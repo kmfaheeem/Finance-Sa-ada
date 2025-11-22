@@ -77,7 +77,8 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Total Inflow</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1 text-green-600">+{formatCurrency(stats.totalDeposits)}</h3>
+              {/* FIX: Removed 'text-slate-900' to resolve conflict with 'text-green-600' */}
+              <h3 className="text-2xl font-bold mt-1 text-green-600">+{formatCurrency(stats.totalDeposits)}</h3>
             </div>
             <div className="p-3 bg-green-50 rounded-full">
               <TrendingUp className="text-green-600" size={24} />
@@ -89,7 +90,8 @@ export const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-500">Total Outflow</p>
-              <h3 className="text-2xl font-bold text-slate-900 mt-1 text-red-600">-{formatCurrency(stats.totalWithdrawals)}</h3>
+              {/* FIX: Removed 'text-slate-900' to resolve conflict with 'text-red-600' */}
+              <h3 className="text-2xl font-bold mt-1 text-red-600">-{formatCurrency(stats.totalWithdrawals)}</h3>
             </div>
             <div className="p-3 bg-red-50 rounded-full">
               <TrendingDown className="text-red-600" size={24} />
@@ -134,10 +136,6 @@ export const Dashboard: React.FC = () => {
             </div>
             <div className="overflow-y-auto flex-1 -mx-6 px-6">
               <ul className="space-y-4">
-                {/* FIXED HERE: 
-                   Added fallback to `(student as any)._id` and `index` 
-                   because MongoDB returns `_id`, not `id`.
-                */}
                 {students.slice(0, 6).map((student, index) => (
                   <li 
                     key={student.id || (student as any)._id || index} 

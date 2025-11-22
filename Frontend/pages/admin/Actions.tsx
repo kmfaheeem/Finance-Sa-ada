@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
-import { UserPlus, Users, Trash2, PlusCircle, Key, UserCog, ShieldCheck } from 'lucide-react';
+import { UserPlus, Users, Trash2, PlusCircle, Key, UserCog, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 export const Actions: React.FC = () => {
   const { 
     addStudent, deleteStudent, 
     addClass, deleteClass, 
     updateStudentPassword, updateStudentUsername, 
-    addAdmin, updateAdminPassword, updateAdminUsername,
+    addAdmin, updateAdminPassword, updateAdminUsername, deleteAdmin,
     students, classes, admins, isLoading 
   } = useFinance();
   
@@ -36,6 +36,7 @@ export const Actions: React.FC = () => {
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [userAdminId, setUserAdminId] = useState('');
   const [newAdminUsername, setNewAdminUsername] = useState('');
+  const [deleteAdminId, setDeleteAdminId] = useState('');
 
   // Handlers - Students & Classes
   const handleAddStudent = async (e: React.FormEvent) => {
@@ -55,7 +56,7 @@ export const Actions: React.FC = () => {
   const handleDeleteStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if(confirm('Are you sure? This action cannot be undone.')) {
-      await deleteStudent(Number(deleteStudentId));
+      await deleteStudent(deleteStudentId);
       setDeleteStudentId('');
     }
   };
@@ -63,7 +64,7 @@ export const Actions: React.FC = () => {
   const handleDeleteClass = async (e: React.FormEvent) => {
     e.preventDefault();
     if(confirm('Are you sure? This action cannot be undone.')) {
-      await deleteClass(Number(deleteClassId));
+      await deleteClass(deleteClassId);
       setDeleteClassId('');
     }
   };
@@ -71,7 +72,7 @@ export const Actions: React.FC = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if(pwStudentId && newPassword) {
-        await updateStudentPassword(Number(pwStudentId), newPassword);
+        await updateStudentPassword(pwStudentId, newPassword);
         setPwStudentId('');
         setNewPassword('');
         alert('Student password updated successfully');
@@ -81,7 +82,7 @@ export const Actions: React.FC = () => {
   const handleChangeUsername = async (e: React.FormEvent) => {
     e.preventDefault();
     if(userStudentId && newUsername) {
-        await updateStudentUsername(Number(userStudentId), newUsername);
+        await updateStudentUsername(userStudentId, newUsername);
         setUserStudentId('');
         setNewUsername('');
         alert('Student username updated successfully');
@@ -101,7 +102,7 @@ export const Actions: React.FC = () => {
   const handleChangeAdminPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if(pwAdminId && newAdminPassword) {
-        await updateAdminPassword(Number(pwAdminId), newAdminPassword);
+        await updateAdminPassword(pwAdminId, newAdminPassword);
         setPwAdminId('');
         setNewAdminPassword('');
         alert('Admin password updated successfully');
@@ -111,10 +112,19 @@ export const Actions: React.FC = () => {
   const handleChangeAdminUsername = async (e: React.FormEvent) => {
     e.preventDefault();
     if(userAdminId && newAdminUsername) {
-        await updateAdminUsername(Number(userAdminId), newAdminUsername);
+        await updateAdminUsername(userAdminId, newAdminUsername);
         setUserAdminId('');
         setNewAdminUsername('');
         alert('Admin username updated successfully');
+    }
+  };
+
+  const handleDeleteAdmin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if(confirm('Are you sure you want to delete this admin? This action cannot be undone.')) {
+      await deleteAdmin(deleteAdminId);
+      setDeleteAdminId('');
+      alert('Admin deleted successfully');
     }
   };
 
@@ -131,7 +141,7 @@ export const Actions: React.FC = () => {
           <ShieldCheck className="text-slate-800" /> 
           Admin Management
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Add Admin */}
           <Card className="bg-slate-50 border-slate-200">
             <div className="flex items-center gap-3 mb-4 text-slate-700">
@@ -196,6 +206,29 @@ export const Actions: React.FC = () => {
                 className="w-full px-3 py-2 border border-slate-300 rounded text-sm" placeholder="New Username"
               />
               <Button type="submit" variant="outline" className="w-full text-sm">Update Username</Button>
+            </form>
+          </Card>
+
+          {/* Delete Admin */}
+          <Card className="bg-slate-50 border-red-200">
+             <div className="flex items-center gap-3 mb-4 text-red-700">
+              <ShieldAlert size={20} />
+              <h3 className="font-semibold">Delete Admin</h3>
+            </div>
+            <form onSubmit={handleDeleteAdmin} className="space-y-3">
+              <select 
+                required value={deleteAdminId} onChange={e => setDeleteAdminId(e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded text-sm"
+              >
+                <option value="">Select Admin...</option>
+                {admins.map(a => (
+                  <option key={a.id} value={a.id}>
+                    {a.name} (@{a.username})
+                  </option>
+                ))}
+              </select>
+              <div className="h-[46px]"></div> {/* Spacer */}
+              <Button type="submit" variant="danger" className="w-full text-sm">Delete Admin</Button>
             </form>
           </Card>
         </div>

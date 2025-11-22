@@ -4,32 +4,25 @@ import { INITIAL_ADMINS, INITIAL_CLASSES, INITIAL_STUDENTS, INITIAL_TRANSACTIONS
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
-// API URL - Change this if hosting elsewhere
-// Checks if there is a hidden environment variable, otherwise defaults to localhost
-// NEW (Force /api if missing):
+// API URL
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  // Initialize with Mock Data so app works even if backend is down
   const [admins, setAdmins] = useState<Admin[]>(INITIAL_ADMINS);
   const [students, setStudents] = useState<Student[]>(INITIAL_STUDENTS);
   const [classes, setClasses] = useState<ClassEntity[]>(INITIAL_CLASSES);
   const [transactions, setTransactions] = useState<Transaction[]>(INITIAL_TRANSACTIONS);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Helper to check if backend is available (optional usage)
   const [isBackendConnected, setIsBackendConnected] = useState(false);
 
-  // Fetch initial data on load
 const refreshData = async () => {
   try {
     const res = await fetch(`${API_URL}/data`);
     if (!res.ok) throw new Error('Backend not reachable');
     const data = await res.json();
     
-    // Helper to ensure everything has an 'id' property
     const normalize = (item: any) => ({ ...item, id: item._id || item.id });
 
     setAdmins(data.admins.map(normalize));
@@ -43,7 +36,6 @@ const refreshData = async () => {
   }
 };
 
-  // Try to connect on mount
   useEffect(() => {
     refreshData();
   }, []);
@@ -58,8 +50,6 @@ const refreshData = async () => {
 
   const login = async (username: string, pass: string): Promise<boolean> => {
     setIsLoading(true);
-    
-    // 1. Try Backend
     try {
       const res = await fetch(`${API_URL}/login`, {
         method: 'POST',
@@ -80,7 +70,6 @@ const refreshData = async () => {
       console.warn("Login: Backend unreachable, trying local...");
     }
 
-    // 2. Fallback: Local Check
     const admin = admins.find(a => a.username === username && a.password === pass);
     if (admin) {
       setCurrentUser({ ...admin, id: String(admin.id), role: 'admin' });
@@ -103,7 +92,6 @@ const refreshData = async () => {
     setCurrentUser(null);
   };
 
-  // --- Helper for dual execution (API + Local Fallback) ---
   const executeAction = async (
     apiCall: () => Promise<void>, 
     localFallback: () => void
@@ -111,10 +99,10 @@ const refreshData = async () => {
     setIsLoading(true);
     try {
       await apiCall();
-      await refreshData(); // Sync with server
+      await refreshData(); 
     } catch (e) {
       console.warn("Action failed on backend, executing locally.");
-      localFallback(); // Update local state directly
+      localFallback(); 
     }
     setIsLoading(false);
   };
@@ -169,6 +157,18 @@ const refreshData = async () => {
     );
   };
 
+  // NEW: Delete Admin Function
+  const deleteAdmin = async (id: number | string) => {
+    await executeAction(
+      async () => {
+        await fetch(`${API_URL}/admins/${id}`, { method: 'DELETE' });
+      },
+      () => {
+        setAdmins(admins.filter(a => String(a.id) !== String(id) && a._id !== id));
+      }
+    );
+  };
+
 // --- Student Management ---
   const addStudent = async (name: string, username: string, password: string = 'default123') => {
     await executeAction(
@@ -179,14 +179,12 @@ const refreshData = async () => {
           body: JSON.stringify({ name, username, password })
         });
 
-        // FIX: Check if the response was successful
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.error || 'Failed to create student');
         }
       },
       () => {
-        // Local Fallback (runs if backend is unreachable OR if we threw the error above)
         const newStudent: Student = {
           id: Date.now(),
           name, 
@@ -196,10 +194,6 @@ const refreshData = async () => {
           createdAt: new Date().toISOString()
         };
         setStudents(prev => [...prev, newStudent]);
-        
-        // Optional: Alert the user if it was a specific error (like duplicate username)
-        // You can remove this alert if you prefer the UI to just update optimistically
-        // alert("Note: Action executed locally. Check console for backend errors.");
       }
     );
   };
@@ -300,7 +294,6 @@ const refreshData = async () => {
         };
         setTransactions([newTx, ...transactions]);
 
-        // Update Balance Locally
         if (entityType === 'student') {
           setStudents(students.map(s => {
             if (String(s.id) === String(entityId) || s._id === entityId) {
@@ -336,6 +329,7 @@ const refreshData = async () => {
         addAdmin,
         updateAdminPassword,
         updateAdminUsername,
+        deleteAdmin, // <--- Ensured this is here
         addStudent,
         updateStudentPassword,
         updateStudentUsername,

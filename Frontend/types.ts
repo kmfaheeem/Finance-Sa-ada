@@ -3,14 +3,14 @@ export type Role = 'admin' | 'student';
 export type TransactionType = 'deposit' | 'withdrawal';
 
 export interface User {
-  id: string; // MongoDB ID is string
+  id: string; 
   name: string;
   username: string;
   role: Role;
 }
 
 export interface Admin {
-  _id?: string; // MongoDB ID
+  _id?: string; 
   id?: number | string;
   name: string;
   username: string;
@@ -21,7 +21,7 @@ export interface Admin {
 
 export interface Student {
   _id?: string;
-  id?: number | string; // Handle compatibility
+  id?: number | string; 
   name: string;
   username: string;
   password?: string;
@@ -40,7 +40,7 @@ export interface ClassEntity {
 export interface Transaction {
   _id?: string;
   id?: number | string;
-  entityId: number | string; // Changed to support String IDs
+  entityId: number | string; 
   entityType: 'student' | 'class';
   amount: number;
   type: TransactionType;
@@ -66,6 +66,7 @@ export interface FinanceContextType extends FinanceState {
   addAdmin: (name: string, username: string, password: string) => Promise<void>;
   updateAdminPassword: (id: number | string, newPassword: string) => Promise<void>;
   updateAdminUsername: (id: number | string, newUsername: string) => Promise<void>;
+  deleteAdmin: (id: number | string) => Promise<void>; // <-- Added this line
   // Student Management
   addStudent: (name: string, username: string, password: string) => Promise<void>;
   updateStudentPassword: (id: number | string, newPassword: string) => Promise<void>;
