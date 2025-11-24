@@ -12,6 +12,7 @@ import { SpecialFunds } from './pages/admin/SpecialFunds';
 import { Reports } from './pages/student/Reports';
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
+import { InstallPrompt } from './components/InstallPrompt';
 
 // ... (Keep your ProtectedRoute component exactly as is) ...
 const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: string[] }> = ({ 
@@ -57,6 +58,7 @@ const App: React.FC = () => {
 
           {/* Vercel Tools */}
           <SpeedInsights />
+          <InstallPrompt />
           <Analytics /> {/* Add this here */}
 
         </HashRouter>
