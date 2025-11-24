@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { TransactionType } from '../../types';
-import { History, ArrowUpCircle, ArrowDownCircle, Trash2, PlusCircle } from 'lucide-react';
+import { History, ArrowUpCircle, ArrowDownCircle, Trash2, PlusCircle, Search } from 'lucide-react';
 
 export const SpecialFunds: React.FC = () => {
   const { specialFunds, addSpecialFund, deleteSpecialFund, addTransaction, transactions, isLoading, formatCurrency } = useFinance();
@@ -18,6 +19,9 @@ export const SpecialFunds: React.FC = () => {
   const [type, setType] = useState<TransactionType>('deposit');
   const [reason, setReason] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+
+  // State for searching active funds
+  const [fundSearchTerm, setFundSearchTerm] = useState('');
 
   const handleAddFund = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +52,22 @@ export const SpecialFunds: React.FC = () => {
   const recentTransactions = transactions
     .filter(t => t.entityType === 'special')
     .slice(0, 5);
+
+  // Prepare options for SearchableSelect
+  const fundOptions = useMemo(() => {
+    return specialFunds.map(f => ({
+      value: f.id || '',
+      label: f.name,
+      subLabel: `Bal: ${formatCurrency(f.accountBalance)}`
+    }));
+  }, [specialFunds, formatCurrency]);
+
+  // Filter active funds based on search term
+  const filteredActiveFunds = useMemo(() => {
+    return specialFunds.filter(fund => 
+      fund.name.toLowerCase().includes(fundSearchTerm.toLowerCase())
+    );
+  }, [specialFunds, fundSearchTerm]);
 
   return (
     <div className="space-y-8">
@@ -93,31 +113,49 @@ export const SpecialFunds: React.FC = () => {
 
         {/* Active Funds List */}
         <Card className="flex flex-col h-full">
-          <h2 className="text-lg font-semibold mb-4 text-slate-800">Active Special Funds</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-slate-800">Active Special Funds</h2>
+          </div>
+          
+          {/* Search Bar */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text"
+              value={fundSearchTerm}
+              onChange={(e) => setFundSearchTerm(e.target.value)}
+              placeholder="Search active funds..."
+              className="w-full pl-9 pr-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
           <div className="flex-1 overflow-y-auto space-y-3 max-h-[300px] pr-2">
-            {specialFunds.length === 0 && (
-              <p className="text-slate-400 text-sm text-center py-8">No special funds created yet.</p>
+            {filteredActiveFunds.length === 0 ? (
+              <p className="text-slate-400 text-sm text-center py-8">
+                {fundSearchTerm ? 'No funds match your search.' : 'No special funds created yet.'}
+              </p>
+            ) : (
+              filteredActiveFunds.map(fund => (
+                <div key={fund.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors">
+                  <div>
+                    <p className="font-medium text-slate-900">{fund.name}</p>
+                    {fund.description && <p className="text-xs text-slate-500">{fund.description}</p>}
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className={`font-bold ${fund.accountBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                      {formatCurrency(fund.accountBalance)}
+                    </span>
+                    <button 
+                      onClick={() => deleteSpecialFund(fund.id!)}
+                      className="text-slate-400 hover:text-red-500 transition-colors p-1"
+                      title="Delete Fund"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
             )}
-            {specialFunds.map(fund => (
-              <div key={fund.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg border border-slate-100 hover:border-blue-200 transition-colors">
-                <div>
-                  <p className="font-medium text-slate-900">{fund.name}</p>
-                  {fund.description && <p className="text-xs text-slate-500">{fund.description}</p>}
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className={`font-bold ${fund.accountBalance >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {formatCurrency(fund.accountBalance)}
-                  </span>
-                  <button 
-                    onClick={() => deleteSpecialFund(fund.id!)}
-                    className="text-slate-400 hover:text-red-500 transition-colors p-1"
-                    title="Delete Fund"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
           </div>
         </Card>
       </div>
@@ -130,18 +168,14 @@ export const SpecialFunds: React.FC = () => {
             <form onSubmit={handleTransaction} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Select Fund</label>
-                  <select
-                    required
+                  <SearchableSelect
+                    label="Select Fund"
+                    options={fundOptions}
                     value={fundId}
-                    onChange={(e) => setFundId(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Fund...</option>
-                    {specialFunds.map(f => (
-                      <option key={f.id} value={f.id}>{f.name} (Bal: {formatCurrency(f.accountBalance)})</option>
-                    ))}
-                  </select>
+                    onChange={setFundId}
+                    required
+                    placeholder="Search fund..."
+                  />
                 </div>
 
                 <div>

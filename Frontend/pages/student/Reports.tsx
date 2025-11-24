@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useFinance } from '../../context/FinanceContext';
 import { Card } from '../../components/ui/Card';
+import { SearchableSelect } from '../../components/ui/SearchableSelect';
 import { Printer } from 'lucide-react';
 
 export const Reports: React.FC = () => {
@@ -62,6 +63,27 @@ export const Reports: React.FC = () => {
     window.print();
   };
 
+  // Options construction for Selects
+  const reportTypeOptions = [
+    { value: 'student', label: 'Students Fund Report' },
+    { value: 'class', label: 'Class Fund Report' },
+    { value: 'special', label: 'Special Fund Report' },
+  ];
+
+  const entityOptions = useMemo(() => {
+    const options = [{ value: 'all', label: 'All' }];
+    if (reportType === 'student') {
+      return [...options, ...students.map(s => ({ value: s.id, label: s.name }))];
+    }
+    if (reportType === 'class') {
+      return [...options, ...classes.map(c => ({ value: c.id, label: c.name }))];
+    }
+    if (reportType === 'special') {
+      return [...options, ...specialFunds.map(f => ({ value: f.id, label: f.name }))];
+    }
+    return options;
+  }, [reportType, students, classes, specialFunds]);
+
   return (
     <div id="printable-area" className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -85,41 +107,30 @@ export const Reports: React.FC = () => {
         <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100 no-print">
           <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Report Type</label>
-              <select 
+              <SearchableSelect
+                label="Report Type"
+                options={reportTypeOptions}
                 value={reportType}
-                onChange={(e) => {
-                  setReportType(e.target.value as 'student' | 'class' | 'special');
+                onChange={(value) => {
+                  setReportType(value as 'student' | 'class' | 'special');
                   setFilterId('all');
                 }}
-                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="student">Students Fund Report</option>
-                <option value="class">Class Fund Report</option>
-                <option value="special">Special Fund Report</option>
-              </select>
+              />
             </div>
 
             {currentUser?.role === 'admin' && (
                 <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    Filter by Entity
-                </label>
-                <select 
+                  <SearchableSelect
+                    label="Filter by Entity"
+                    options={entityOptions}
                     value={filterId}
-                    onChange={(e) => setFilterId(e.target.value)}
-                    className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="all">All</option>
-                    {reportType === 'student' && students.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    {reportType === 'class' && classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    {reportType === 'special' && specialFunds.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
-                </select>
+                    onChange={setFilterId}
+                  />
                 </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
               <input 
                 type="date" 
                 value={dateFilter}

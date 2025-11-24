@@ -31,6 +31,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     { name: 'Student Funds', path: '/admin/students-fund', icon: Users },
     { name: 'Class Funds', path: '/admin/class-fund', icon: Landmark },
     { name: 'Special Funds', path: '/admin/special-fund', icon: Star },
+    { name: 'Reports', path: '/student/reports', icon: FileText }, // Added Reports to Admin
   ];
 
   const studentLinks = [

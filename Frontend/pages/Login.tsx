@@ -22,12 +22,13 @@ export const Login: React.FC = () => {
       return;
     }
 
+    // Attempt login
     const success = await login(username, password);
     
     if (success) {
-      // Redirect based on username logic (mock logic)
-      // Admins are 'admin1' or 'admin2'
-      if (username.startsWith('admin')) {
+      // Strict routing based on role conventions
+      // In a real app, we would check the returned role from the backend
+      if (username.toLowerCase().startsWith('admin')) {
         navigate('/admin/dashboard');
       } else {
         navigate('/student/reports');
