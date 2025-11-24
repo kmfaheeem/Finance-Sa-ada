@@ -41,8 +41,14 @@ export const Login: React.FC = () => {
       <div className="w-full max-w-md space-y-8">
         {/* Header Section */}
         <div className="text-center">
+          {/* Reverted container size to h-16 w-16 */}
           <div className="mx-auto h-16 w-16 bg-blue-600 rounded-2xl rotate-3 flex items-center justify-center shadow-blue-200 shadow-lg mb-6 transition-transform duration-300 hover:rotate-6 hover:scale-105">
-            <span className="text-white font-bold text-2xl -rotate-3 tracking-tighter">HF</span>
+            {/* Increased image size to h-24 w-24 (larger than box for pop-out effect) */}
+            <img 
+              src="/02.2__1_-removebg-preview.png" 
+              alt="Logo" 
+              className="h-24 w-24 -rotate-3 object-contain brightness-0 invert" 
+            />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-slate-900 tracking-tight">
             Welcome back

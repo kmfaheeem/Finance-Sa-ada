@@ -8,7 +8,9 @@ export const Reports: React.FC = () => {
   const { transactions, students, classes, specialFunds, currentUser, formatCurrency } = useFinance();
   const [reportType, setReportType] = useState<'student' | 'class' | 'special'>('student');
   const [filterId, setFilterId] = useState<string>('all');
-  const [dateFilter, setDateFilter] = useState('');
+  // Changed single date filter to start and end dates
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   // Filter logic
   const filteredTransactions = useMemo(() => {
@@ -34,12 +36,16 @@ export const Reports: React.FC = () => {
         }
     }
 
-    if (dateFilter) {
-      data = data.filter(t => t.date === dateFilter);
+    // Date Range Filtering
+    if (startDate) {
+      data = data.filter(t => t.date >= startDate);
+    }
+    if (endDate) {
+      data = data.filter(t => t.date <= endDate);
     }
 
     return data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [transactions, reportType, filterId, dateFilter, currentUser, students]);
+  }, [transactions, reportType, filterId, startDate, endDate, currentUser, students]);
 
   const getEntityName = (id: number | string) => {
     const idStr = String(id);
@@ -105,7 +111,8 @@ export const Reports: React.FC = () => {
       <Card className="print:shadow-none print:border-none print:p-0">
         {/* Filters Toolbar - Hidden on print */}
         <div className="flex flex-col md:flex-row gap-4 mb-6 p-4 bg-slate-50 rounded-lg border border-slate-100 no-print">
-          <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Changed grid columns to accommodate extra date field */}
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
               <SearchableSelect
                 label="Report Type"
@@ -129,12 +136,24 @@ export const Reports: React.FC = () => {
                 </div>
             )}
 
+            {/* Start Date Input */}
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+              <label className="block text-sm font-medium text-slate-700 mb-1">From Date</label>
               <input 
                 type="date" 
-                value={dateFilter}
-                onChange={(e) => setDateFilter(e.target.value)}
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* End Date Input */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">To Date</label>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
                 className="w-full px-3 py-2 bg-white border border-slate-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
