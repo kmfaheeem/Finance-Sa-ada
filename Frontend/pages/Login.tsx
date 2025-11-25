@@ -45,7 +45,7 @@ export const Login: React.FC = () => {
           <div className="mx-auto h-16 w-16 bg-blue-600 rounded-2xl rotate-3 flex items-center justify-center shadow-blue-200 shadow-lg mb-6 transition-transform duration-300 hover:rotate-6 hover:scale-105">
             {/* Increased image size to h-24 w-24 (larger than box for pop-out effect) */}
             <img 
-              src="/02.2__1_-removebg-preview.png" 
+              src="" 
               alt="Logo" 
               className="h-24 w-24 -rotate-3 object-contain brightness-0 invert" 
             />
@@ -54,7 +54,7 @@ export const Login: React.FC = () => {
             Welcome back
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Sign in to your Hikma-Finance account
+            Sign in to your Fouz-Finance account
           </p>
         </div>
 
