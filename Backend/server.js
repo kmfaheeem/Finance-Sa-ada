@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "https://fouz-finance.vercel.app" 
+    "https://fouz-finance.vercel.app",
+    "https://finance-fouz.vercel.app"
   ],
   credentials: true
 }));
