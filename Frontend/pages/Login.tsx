@@ -45,7 +45,7 @@ export const Login: React.FC = () => {
           <div className="mx-auto h-16 w-16 bg-blue-600 rounded-2xl rotate-3 flex items-center justify-center shadow-blue-200 shadow-lg mb-6 transition-transform duration-300 hover:rotate-6 hover:scale-105">
             {/* Increased image size to h-24 w-24 (larger than box for pop-out effect) */}
             <img 
-              src="/fouz_logo-removebg-preview.png" 
+              src="/0 (3).png" 
               alt="Logo" 
               className="h-24 w-24 -rotate- -5 object-contain brightness-0 invert" 
             />
