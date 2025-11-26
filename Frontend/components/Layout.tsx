@@ -49,7 +49,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row">
       {/* Mobile Header */}
       <div className="md:hidden bg-white border-b border-slate-200 p-4 flex justify-between items-center sticky top-0 z-20 no-print">
-        <h1 className="font-bold text-lg text-blue-600">Fouz-Finance</h1>
+        <h1 className="font-bold text-lg text-blue-600">Sa'ada-Finance</h1>
         <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -63,7 +63,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         `}
       >
         <div className="p-6">
-          <h2 className="text-2xl font-bold tracking-tight text-blue-400">Fouz-Finance</h2>
+          <h2 className="text-2xl font-bold tracking-tight text-blue-400">Sa'ada-Finance</h2>
           <div className="flex items-center gap-2 mt-4 p-2 rounded bg-slate-800">
             <div className="bg-slate-700 p-1 rounded-full">
               <User size={16} />

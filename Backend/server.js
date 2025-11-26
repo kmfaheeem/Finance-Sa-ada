@@ -11,16 +11,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors({
   origin: [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://fouz-finance.vercel.app",
-    "https://finance-fouz.vercel.app"
+    "http://127.0.0.1:5173"
   ],
   credentials: true
 }));
 app.use(bodyParser.json());
 
 // MongoDB Connection
-const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.ecplgol.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.kvmgrad.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
 
 console.log("Connecting to MongoDB...");
 console.log("Using URI:", MONGO_URI);

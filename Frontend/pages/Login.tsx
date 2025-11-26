@@ -54,7 +54,7 @@ export const Login: React.FC = () => {
             Welcome back
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Sign in to your Fouz-Finance account
+            Sign in to your Sa'ada-Finance account
           </p>
         </div>
 

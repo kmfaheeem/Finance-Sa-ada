@@ -8,7 +8,7 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 
-const USER_STORAGE_KEY = 'hikma_finance_user';
+const USER_STORAGE_KEY = 'Sa'ada_finance_user';
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize currentUser from localStorage to persist login across refreshes

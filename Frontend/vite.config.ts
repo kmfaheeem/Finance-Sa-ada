@@ -22,8 +22,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true
       },
       manifest: {
-        name: 'Fouz Finance',
-        short_name: 'Fouz',
+        name: 'Sa-ada Finance',
+        short_name: 'Sa-ada',
         description: 'Finance management app for students and admins',
         theme_color: '#ffffff',
         background_color: '#ffffff',
