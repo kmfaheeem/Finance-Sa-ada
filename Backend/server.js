@@ -12,6 +12,7 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
+    "https://saada-finance.vercel.app",
     process.env.FRONTEND_URL // We will set this Env Var in Render later
   ],
   credentials: true
