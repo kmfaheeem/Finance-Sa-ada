@@ -22,6 +22,7 @@ app.use(bodyParser.json());
 const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.ecplgol.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
 
 console.log("Connecting to MongoDB...");
+console.log("Using URI:", MONGO_URI);
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
