@@ -23,8 +23,8 @@ export default defineConfig({
         cleanupOutdatedCaches: true
       },
       manifest: {
-        name: 'Hikma Finance',
-        short_name: 'Hikma',
+        name: 'Fouz Finance',
+        short_name: 'Fouz',
         description: 'Finance management app for students and admins',
         theme_color: '#ffffff',
         background_color: '#ffffff', // Required for PWA installability
