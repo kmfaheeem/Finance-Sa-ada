@@ -12,14 +12,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // Only include assets that actually exist in your public folder to avoid 404 errors
-      includeAssets: ['02.2__1_-removebg-preview.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['fouz_logo-removebg-preview.png', 'pwa-192x192.png', 'pwa-512x512.png'],
       devOptions: {
-        enabled: true // Enable PWA in development mode
+        enabled: true
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
-        navigateFallback: '/index.html', // Essential for React Router offline support
+        navigateFallback: '/index.html',
         cleanupOutdatedCaches: true
       },
       manifest: {
@@ -27,9 +26,9 @@ export default defineConfig({
         short_name: 'Fouz',
         description: 'Finance management app for students and admins',
         theme_color: '#ffffff',
-        background_color: '#ffffff', // Required for PWA installability
-        display: 'standalone',       // Required for PWA installability
-        start_url: '/',              // Required for PWA installability
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         orientation: 'portrait',
         icons: [
           {
@@ -46,7 +45,7 @@ export default defineConfig({
             src: 'pwa-512x512.png',
             sizes: '512x512',
             type: 'image/png',
-            purpose: 'any maskable' // Helpful for Android adaptive icons
+            purpose: 'any maskable'
           }
         ]
       }
@@ -56,6 +55,11 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  // NEW: Explicit server configuration to fix WebSocket errors
+  server: {
+    host: '127.0.0.1', // Force IPv4
+    port: 5173,        // Explicit port
   },
   build: {
     chunkSizeWarningLimit: 2500,
