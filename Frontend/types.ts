@@ -17,6 +17,7 @@ export interface Admin {
   password?: string;
   role: 'admin';
   createdAt?: string;
+  createdBy?: string;
 }
 
 export interface Student {
@@ -57,6 +58,7 @@ export interface Transaction {
   reason: string;
   createdAt: string;
   entityName?: string;
+  createdBy?: string;
 }
 
 export interface FinanceState {

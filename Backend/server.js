@@ -13,62 +13,63 @@ app.use(cors({
     "http://localhost:5173",
     "http://127.0.0.1:5173",
     "https://saada-finance.vercel.app",
-    process.env.FRONTEND_URL // We will set this Env Var in Render later
+    process.env.FRONTEND_URL 
   ],
   credentials: true
 }));
 app.use(bodyParser.json());
 
-// MongoDB Connection
-const MONGO_URI = process.env.MONGODB_URI || "mongodb+srv://finance:finance@cluster0.kvmgrad.mongodb.net/?appName=Cluster0&retryWrites=true&w=majority";
-
-console.log("Connecting to MongoDB...");
-console.log("Using URI:", MONGO_URI);
+// MongoDB Connection (Suggestion 2: Strict Env Check)
+const MONGO_URI = process.env.MONGODB_URI;
+if (!MONGO_URI) {
+  console.error("FATAL ERROR: MONGODB_URI is not defined in .env file.");
+  process.exit(1); 
+}
 
 mongoose.connect(MONGO_URI)
   .then(() => console.log('MongoDB Connected'))
-  .catch(err => {
-      console.error('MongoDB Connection Error:', err);
-  });
+  .catch(err => console.error('MongoDB Connection Error:', err));
 
 // --- SCHEMAS ---
 
+// (Suggestion 3: Added recoveryPin)
 const AdminSchema = new mongoose.Schema({
   name: String,
   username: { type: String, unique: true },
-  password: String, 
+  password: { type: String, required: true }, 
+  recoveryPin: { type: String, required: true }, // Secure reset
   role: { type: String, default: 'admin' }
 });
 
 const StudentSchema = new mongoose.Schema({
-  name: String,
-  username: { type: String, unique: true },
-  password: String,
+  name: { type: String, required: true },
+  username: { type: String, unique: true, required: true },
+  password: { type: String, required: true },
+  recoveryPin: { type: String, required: true }, // Secure reset
   accountBalance: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
 
+// ... (Keep Class, SpecialFund, Transaction Schemas as they were) ...
 const ClassSchema = new mongoose.Schema({
   name: String,
   accountBalance: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
-
-// NEW: Special Fund Schema
 const SpecialFundSchema = new mongoose.Schema({
   name: String,
   description: String,
   accountBalance: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
-
 const TransactionSchema = new mongoose.Schema({
   entityId: String, 
-  entityType: String, // 'student', 'class', 'special'
+  entityType: String, 
   amount: Number,
-  type: String, // 'deposit', 'withdrawal'
+  type: String,
   date: String,
   reason: String,
+  createdBy: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -80,13 +81,14 @@ const Transaction = mongoose.model('Transaction', TransactionSchema);
 
 // --- ROUTES ---
 
-// 1. Initialization
+// 1. Initialization (Seed)
 app.post('/api/seed', async (req, res) => {
   const adminCount = await Admin.countDocuments();
   if (adminCount === 0) {
+    // Added default pin '0000' for seeded admins
     await Admin.create([
-      { name: 'Admin One', username: 'admin1', password: 'admin123' },
-      { name: 'Admin Two', username: 'admin2', password: 'admin223' }
+      { name: 'Admin One', username: 'admin1', password: 'admin123', recoveryPin: '0000' },
+      { name: 'Admin Two', username: 'admin2', password: 'admin223', recoveryPin: '0000' }
     ]);
   }
   res.json({ message: 'Database seeded successfully' });
@@ -95,6 +97,9 @@ app.post('/api/seed', async (req, res) => {
 // 2. Login
 app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
+  
+  // (Suggestion 6: Validation)
+  if (!username || !password) return res.status(400).json({ success: false, message: 'Fields required' });
 
   const admin = await Admin.findOne({ username, password });
   if (admin) {
@@ -115,14 +120,63 @@ app.post('/api/login', async (req, res) => {
   res.status(401).json({ success: false, message: 'Invalid credentials' });
 });
 
-// 3. Fetch All Data
+// 3. Sign Up (Create Student)
+app.post('/api/signup', async (req, res) => {
+  const { name, username, password, recoveryPin } = req.body;
+
+  // (Suggestion 6: Validation)
+  if (!name || !username || !password || !recoveryPin) {
+    return res.status(400).json({ success: false, message: 'All fields including Recovery Pin are required' });
+  }
+
+  try {
+    const existing = await Student.findOne({ username });
+    if (existing) return res.status(400).json({ success: false, message: 'Username taken' });
+
+    const newStudent = new Student({ name, username, password, recoveryPin });
+    await newStudent.save();
+
+    res.json({ 
+      success: true, 
+      user: { id: newStudent._id, name: newStudent.name, username: newStudent.username, role: 'student' } 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Reset Password (Verified)
+app.post('/api/reset-password', async (req, res) => {
+  const { username, recoveryPin, newPassword } = req.body;
+
+  try {
+    // Check if user exists with matching PIN
+    let user = await Admin.findOne({ username, recoveryPin });
+    if (!user) user = await Student.findOne({ username, recoveryPin });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid Username or Recovery Pin' });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. Fetch All Data (Suggestion 1: Stop Data Leakage)
 app.get('/api/data', async (req, res) => {
   try {
-    const admins = await Admin.find();
-    const students = await Student.find();
-    const classes = await Class.find();
-    const specialFunds = await SpecialFund.find();
-    const transactions = await Transaction.find().sort({ createdAt: -1 });
+    // .select() excludes sensitive fields from the response
+    const admins = await Admin.find().select('-password -recoveryPin -__v');
+    const students = await Student.find().select('-password -recoveryPin -__v');
+    const classes = await Class.find().select('-__v');
+    const specialFunds = await SpecialFund.find().select('-__v');
+    const transactions = await Transaction.find().sort({ createdAt: -1 }).select('-__v');
+    
     res.json({ admins, students, classes, specialFunds, transactions });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -195,17 +249,24 @@ app.delete('/api/admins/:id', async (req, res) => {
   catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 5. Transactions
+// 5. Transactions (Updated with Audit Log)
 app.post('/api/transactions', async (req, res) => {
   try {
-    const { entityId, entityType, amount, type, date, reason } = req.body;
+    // validation
+    const { entityId, entityType, amount, type, date, reason, createdBy } = req.body; // <--- Extract createdBy
+    
+    if (!entityId || !amount || !type || !date) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
     const numAmount = Number(amount);
 
     const transaction = new Transaction({
-      entityId, entityType, amount: numAmount, type, date, reason
+      entityId, entityType, amount: numAmount, type, date, reason, createdBy // <--- Save it
     });
     await transaction.save();
 
+    // (Suggestion 5 Skipped: Keeping your original balance update logic here)
     if (entityType === 'student') {
       const student = await Student.findById(entityId);
       if (student) {
@@ -238,6 +299,65 @@ app.post('/api/transactions', async (req, res) => {
   }
 });
 
+// Sign Up Route (Creates a Student)
+app.post('/api/signup', async (req, res) => {
+  const { name, username, password } = req.body;
+  try {
+    // Check if username exists
+    const existingAdmin = await Admin.findOne({ username });
+    const existingStudent = await Student.findOne({ username });
+    
+    if (existingAdmin || existingStudent) {
+      return res.status(400).json({ success: false, message: 'Username already taken' });
+    }
+
+    // Create new student
+    const newStudent = new Student({ name, username, password });
+    await newStudent.save();
+
+    res.json({ 
+      success: true, 
+      user: { id: newStudent._id, name: newStudent.name, username: newStudent.username, role: 'student' } 
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Verify User & Reset Password
+app.post('/api/reset-password', async (req, res) => {
+  const { username, recoveryPin, newPassword } = req.body;
+  
+  try {
+    // Check Admin
+    let user = await Admin.findOne({ username, recoveryPin });
+    if (!user) {
+      // Check Student if Admin not found
+      user = await Student.findOne({ username, recoveryPin });
+    }
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: 'Invalid username or recovery pin' });
+    }
+
+    // Update Password
+    user.password = newPassword; // In production, hash this with bcrypt!
+    await user.save();
+
+    res.json({ success: true, message: 'Password updated successfully' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
+// Suggestion 5: Rate Limiting
+const rateLimit = require('express-rate-limit');
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+app.use(limiter);

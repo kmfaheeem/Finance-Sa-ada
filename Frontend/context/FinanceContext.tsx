@@ -2,7 +2,13 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FinanceContextType, Student, ClassEntity, SpecialFund, Transaction, User, TransactionType, Admin } from '../types';
 import { INITIAL_ADMINS, INITIAL_CLASSES, INITIAL_STUDENTS, INITIAL_TRANSACTIONS } from '../services/mockData';
 
-const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
+// Update the Interface to include new functions
+interface ExtendedFinanceContextType extends FinanceContextType {
+  signup: (name: string, username: string, pass: string, pin: string) => Promise<{ success: boolean; message?: string }>;
+  resetPassword: (username: string, pin: string, newPass: string) => Promise<{ success: boolean; message?: string }>;
+}
+
+const FinanceContext = createContext<ExtendedFinanceContextType | undefined>(undefined);
 
 // API URL
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -11,7 +17,6 @@ const API_URL = BASE_URL.endsWith('/api') ? BASE_URL : `${BASE_URL}/api`;
 const USER_STORAGE_KEY = 'Sa-ada_finance_user';
 
 export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize currentUser from localStorage to persist login across refreshes
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem(USER_STORAGE_KEY);
     return storedUser ? JSON.parse(storedUser) : null;
@@ -68,7 +73,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         const data = await res.json();
         if (data.success) {
           setCurrentUser(data.user);
-          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user)); // Save to storage
+          localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
           await refreshData();
           setIsLoading(false);
           return true;
@@ -78,11 +83,12 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.warn("Login: Backend unreachable, trying local...");
     }
 
+    // Local Fallback
     const admin = admins.find(a => a.username === username && a.password === pass);
     if (admin) {
       const userObj: User = { ...admin, id: String(admin.id), role: 'admin' };
       setCurrentUser(userObj);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userObj)); // Save to storage
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userObj));
       setIsLoading(false);
       return true;
     }
@@ -91,7 +97,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (student) {
       const userObj: User = { ...student, id: String(student.id), role: 'student' };
       setCurrentUser(userObj);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userObj)); // Save to storage
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userObj));
       setIsLoading(false);
       return true;
     }
@@ -100,15 +106,63 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return false;
   };
 
+  // NEW: Signup Function
+  const signup = async (name: string, username: string, pass: string, pin: string) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/signup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, username, password: pass, recoveryPin: pin }),
+      });
+      
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setCurrentUser(data.user);
+        localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(data.user));
+        await refreshData();
+        setIsLoading(false);
+        return { success: true };
+      } else {
+        setIsLoading(false);
+        return { success: false, message: data.message || 'Signup failed' };
+      }
+    } catch (e) {
+      setIsLoading(false);
+      return { success: false, message: 'Backend unreachable' };
+    }
+  };
+
+  // NEW: Reset Password Function
+  const resetPassword = async (username: string, pin: string, newPass: string) => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, recoveryPin: pin, newPassword: newPass }),
+      });
+      
+      const data = await res.json();
+      setIsLoading(false);
+      if (res.ok && data.success) {
+        return { success: true };
+      } else {
+        return { success: false, message: data.message || 'Validation failed' };
+      }
+    } catch (e) {
+      setIsLoading(false);
+      return { success: false, message: 'Backend unreachable' };
+    }
+  };
+
   const logout = () => {
-    localStorage.removeItem(USER_STORAGE_KEY); // Clear from storage
+    localStorage.removeItem(USER_STORAGE_KEY);
     setCurrentUser(null);
   };
 
-  const executeAction = async (
-    apiCall: () => Promise<void>, 
-    localFallback: () => void
-  ) => {
+  // Helper for CRUD actions
+  const executeAction = async (apiCall: () => Promise<void>, localFallback: () => void) => {
     setIsLoading(true);
     try {
       await apiCall();
@@ -132,10 +186,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if(!res.ok) throw new Error("Failed to add admin");
       },
       () => {
-        const newAdmin: Admin = {
-          id: Date.now(),
-          name, username, password, role: 'admin'
-        };
+        const newAdmin: Admin = { id: Date.now(), name, username, password, role: 'admin' };
         setAdmins([...admins, newAdmin]);
       }
     );
@@ -197,14 +248,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if (!res.ok) throw new Error('Failed to create student');
       },
       () => {
-        const newStudent: Student = {
-          id: Date.now(),
-          name, 
-          username, 
-          password, 
-          accountBalance: 0, 
-          createdAt: new Date().toISOString()
-        };
+        const newStudent: Student = { id: Date.now(), name, username, password, accountBalance: 0, createdAt: new Date().toISOString() };
         setStudents(prev => [...prev, newStudent]);
       }
     );
@@ -266,10 +310,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if(!res.ok) throw new Error("Failed to add class");
       },
       () => {
-        const newClass: ClassEntity = {
-          id: Date.now(),
-          name, accountBalance: 0, createdAt: new Date().toISOString()
-        };
+        const newClass: ClassEntity = { id: Date.now(), name, accountBalance: 0, createdAt: new Date().toISOString() };
         setClasses([...classes, newClass]);
       }
     );
@@ -299,10 +340,7 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
         if(!res.ok) throw new Error("Failed to add special fund");
       },
       () => {
-        const newFund: SpecialFund = {
-          id: Date.now(),
-          name, description, accountBalance: 0, createdAt: new Date().toISOString()
-        };
+        const newFund: SpecialFund = { id: Date.now(), name, description, accountBalance: 0, createdAt: new Date().toISOString() };
         setSpecialFunds([...specialFunds, newFund]);
       }
     );
@@ -320,7 +358,6 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     );
   };
 
-
   // --- Transactions ---
   const addTransaction = async (
     entityId: number | string,
@@ -330,19 +367,27 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
     date: string,
     reason: string
   ) => {
+    
+    // Get current user name for audit
+    const adminName = currentUser?.username || 'Unknown Admin';
+
     await executeAction(
       async () => {
         const res = await fetch(`${API_URL}/transactions`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ entityId, entityType, amount, type, date, reason })
+          // Send createdBy field
+          body: JSON.stringify({ entityId, entityType, amount, type, date, reason, createdBy: adminName })
         });
         if(!res.ok) throw new Error("Failed to add transaction");
       },
       () => {
+        // (Suggestion 5 Skipped: Keeping your local logic here)
         const newTx: Transaction = {
           id: Date.now(),
-          entityId, entityType, amount, type, date, reason, createdAt: new Date().toISOString()
+          entityId, entityType, amount, type, date, reason, 
+          createdBy: adminName, // <--- Add to local state too
+          createdAt: new Date().toISOString()
         };
         setTransactions([newTx, ...transactions]);
 
@@ -370,29 +415,13 @@ export const FinanceProvider: React.FC<{ children: React.ReactNode }> = ({ child
   return (
     <FinanceContext.Provider
       value={{
-        currentUser,
-        admins,
-        students,
-        classes,
-        specialFunds,
-        transactions,
-        isLoading,
-        login,
-        logout,
-        addAdmin,
-        updateAdminPassword,
-        updateAdminUsername,
-        deleteAdmin,
-        addStudent,
-        updateStudentPassword,
-        updateStudentUsername,
-        deleteStudent,
-        addClass,
-        deleteClass,
-        addSpecialFund,
-        deleteSpecialFund,
-        addTransaction,
-        formatCurrency
+        currentUser, admins, students, classes, specialFunds, transactions, isLoading,
+        login, signup, resetPassword, logout,
+        addAdmin, updateAdminPassword, updateAdminUsername, deleteAdmin,
+        addStudent, updateStudentPassword, updateStudentUsername, deleteStudent,
+        addClass, deleteClass,
+        addSpecialFund, deleteSpecialFund,
+        addTransaction, formatCurrency
       }}
     >
       {children}
